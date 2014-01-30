@@ -1,68 +1,101 @@
 /**
  * Обработчик клика по ссылке с классом 'popup-link'
- * @param {Event} e событие клика
+ * @param {HTMLElement} el контейнер в котором будем искать ссылки (по умолчанию body) 
+ * @param {HTMLElement} tag tag который нам нужен в этом контейнере 
+ * @param {Attribute} clName class елемента
+ * @param {Function} funTo обработчик 
  * @private
  */
-function _onMouseClick(e, el) {
-     if (!e) e = window.event;
-     if (e.type == 'click'){
-        openPopupFromLink(el);  
-     }
-}
 
+ function _onMouseClick(el,tag,clName,funTo)
+ {
+   var b = [];  el = el || document.body;
+ try { var a = el.getElementsByTagName(tag); }   catch(ex) { return[]; }
+    for( var i=0; i < a.length; i++ )
+     if( !clName || a[i].className == clName )
+      {
+        b.push(a[i]);
+        if( funTo ) funTo( a[i] );
+      }
+   return b;
+ }
+
+   _onMouseClick( 0, "a", "popup-link", function(el) {
+    el.onclick = function(e) { openPopupFromLink(el); return false; };
+     });
+
+     
+/**
+ * Обработчик события
+ * Добавляем событие елементу
+ * @param {HTMLElement} el елемент которому добавляем событие
+ * @param {Event} ev событие которое нужно привязать
+ * @param {Function} fun обработчик для данного события
+ */
+ function elEvent( el, ev, fun )
+  {
+      if( el.addEventListener )    el.addEventListener( ev, fun, false );
+      else  if( el.attachEvent )   el.attachEvent     ( "on" + ev, fun);
+      else  el['on' + ev] = fun;
+  }
+  
+  
 /**
  * Получает данные из ссылки
  * на основе этих данных создаёт попап (через createPopup) и добавляет его в DOM
  * @param {HTMLElement} link Ссылка с data-аттрибутами
  */
 function openPopupFromLink(link) {
-    title = link.getAttribute('data-title');
-    message = link.getAttribute('data-message');
-    inlink = link.getAttribute('href');
+    var title = link.dataset.title;
+    var message = link.dataset.message;
     
-       var change = '%s';
-       var newmessage = message.replace(change,inlink,'g');
-       message = newmessage; 
+	   var change = '%s';
+       var newmessage = message.replace(change,link.href,'g');
        
-    creat = createPopup(title, message,onOk);
-     document.body.appendChild(creat);    
-     
-    c_width = document.body.clientWidth;
-    mas_con = document.getElementById('massage');
-    mas_con.style.left = c_width/2 - 190 +'px';
+    var popup = createPopup(title, newmessage);
+	_onMouseClick( popup, "input", "", function(el)
+	{
+ 	   elEvent( el, "click", function(e) { onOk(el,link.href); });
+	});
+	
+    var c_width = document.body.clientWidth;
+    popup.style.left = c_width/2 - 190 +'px';
     
-    lock = document.getElementById('lock');
-    lock.style.display = 'block';
+    var lock = document.getElementById('lock');
+    lock.style.display = 'block';    
 }
 
 /**
  * Создаёт DOM-узел с сообщением
  * @param {String} title Заголовок сообщение
  * @param {String} message Текст сообщения сообщение
- * @param {Function} onOk Обработчик клика по кнопке 'Да'
  * @returns {HTMLElement}
  */
-function createPopup(title, message, fun) {
+function createPopup(title, message) {
     
   var content = document.createElement('div');
- //    document.body.appendChild(content);    
+      content.className = "message";   
 
-  content.innerHTML = '<div class="message" id="massage"> \
+  content.innerHTML = ' \
                             <h1>' + title + '</h1> \
                             <div class="desc">' + message + '</div> \
-                            <input onclick="' + fun.name + '(this.value)" class="no" type="button" value="Нет"> \
-                            <input onclick="' + fun.name + '(this.value)" class="ok" type="button" value="Да"> \
-                       </div>';
-  return content.firstChild;
+                            <input  class="no" type="button" value="Нет"> \
+                            <input  class="ok" type="button" value="Да"> \
+                       ';
+  return document.body.appendChild(content);  
 }
 
-function onOk(val){
-    if (val == 'Да'){
-      document.body.removeChild(creat);
-      lock.style.display = 'none'; 
-      window.location.assign(inlink);  
-    } else {
-      document.body.removeChild(creat);
-      lock.style.display = 'none';  
+/**
+ * Обработчик клика (да или нет)
+ * @param {HTMLElement} el input
+ * @param {HTMLElement} link сылка для перехода 
+ */ 
+function onOk(el,link){
+    
+	 document.body.removeChild( el.parentNode ); 
+     lock.style.display = 'none';
+
+    if (el.value == 'Да'){
+      window.location.assign(link);  
     }
 }

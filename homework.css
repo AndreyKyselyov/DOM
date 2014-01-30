@@ -19,17 +19,18 @@ body
 .content{
     padding : 10px;
 }
-.content img{
-    width : 100px;
-    height : auto;
-}
-.goo{
-    margin-top: 12px;
-}
 .content li{
     display: inline-block;
     margin-left: 40px;
     vertical-align: top;
+}
+.content li a{
+    color: #f0ec79;
+    text-decoration: none;
+    font-size: 16px;
+}
+.content li a:hover{
+    text-decoration: underline;
 }
 .content li:first-child{
     margin:0;
